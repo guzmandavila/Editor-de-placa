@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editor de placa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#121114;
+    --panel:#19181c;
+    --panel-2:#211f24;
+    --line:rgba(255,255,255,.08);
+    --text:#eeece9;
+    --muted:#8d8b91;
+    --accent:#a3211b;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{background:var(--bg);color:var(--text);font-family:'Montserrat',sans-serif;min-height:100vh;}
+  .app{display:flex;min-height:100vh;}
+  @media (max-width:880px){
+    .app{flex-direction:column;}
+    .controls-col{flex:none;width:100%;border-left:none;border-top:1px solid var(--line);}
+    .preview-col{padding:24px 16px;}
+  }
+  .preview-col{flex:1 1 60%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;gap:14px;}
+  .seg{display:flex;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:3px;gap:3px;}
+  .seg-btn{flex:1;background:transparent;border:none;color:var(--muted);font-family:'Montserrat',sans-serif;font-weight:700;font-size:12.5px;padding:9px 12px;border-radius:6px;cursor:pointer;letter-spacing:.02em;white-space:nowrap;}
+  .seg-btn.active{background:var(--accent);color:#fff;}
+  .stage{
+    background-image:
+      linear-gradient(45deg,#2a292e 25%,transparent 25%),
+      linear-gradient(-45deg,#2a292e 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#2a292e 75%),
+      linear-gradient(-45deg,transparent 75%,#2a292e 75%);
+    background-size:22px 22px;
+    background-position:0 0,0 11px,11px -11px,-11px 0;
+    background-color:#0d0d0f;
+    border-radius:14px;
+    padding:clamp(10px,2vw,22px);
+    max-width:100%;
+    overflow:auto;
+    box-shadow:inset 0 0 0 1px var(--line);
+  }
+  canvas{display:block;max-width:100%;max-height:70vh;height:auto;}
+  .readout{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center;}
+  .readout b{color:var(--text);font-weight:600;}
+  .controls-col{flex:0 0 380px;background:var(--panel);border-left:1px solid var(--line);padding:36px 30px 40px;display:flex;flex-direction:column;gap:19px;overflow-y:auto;}
+  h1{font-size:15px;font-weight:800;letter-spacing:.02em;margin:0 0 4px;}
+  .sub{font-size:12.5px;color:var(--muted);margin:0;line-height:1.5;}
+  label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:7px;}
+  input[type=text],textarea,select.mag-select{width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:11px 13px;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:600;}
+  select.mag-select{cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 7l5 5 5-5' stroke='%238d8b91' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:34px;}
+  select.mag-select:focus{outline:none;border-color:var(--accent);}
+  textarea{min-height:62px;line-height:1.5;resize:vertical;}
+  input[type=text]:focus,textarea:focus{outline:none;border-color:var(--accent);}
+  .field{display:flex;flex-direction:column;}
+  .row2{display:flex;gap:14px;}
+  .row2 .field{flex:1;min-width:0;}
+  .color-field{display:flex;align-items:center;gap:10px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:7px 11px;}
+  .color-field input[type=color]{-webkit-appearance:none;appearance:none;width:28px;height:28px;border:none;background:none;padding:0;border-radius:6px;overflow:hidden;cursor:pointer;flex:none;}
+  .color-field input[type=color]::-webkit-color-swatch-wrapper{padding:0;}
+  .color-field input[type=color]::-webkit-color-swatch{border:none;border-radius:6px;}
+  .color-field span{font-family:var(--mono);font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;}
+  .check-field{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none;}
+  .check-field input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex:none;}
+  .spacer{flex:1;min-height:6px;}
+  button#downloadBtn{background:var(--accent);color:#fff;border:none;border-radius:9px;padding:15px 18px;font-family:'Montserrat',sans-serif;font-weight:800;font-size:13.5px;letter-spacing:.03em;text-transform:uppercase;cursor:pointer;}
+  button#downloadBtn:hover{filter:brightness(1.1);}
+  button#downloadBtn:active{transform:translateY(1px);}
+  button#downloadBtn:focus-visible{outline:2px solid #fff;outline-offset:2px;}
+  input:focus-visible,textarea:focus-visible,.seg-btn:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+  .hint{font-size:11.5px;color:var(--muted);line-height:1.55;margin:0;}
+  .credit-footer{font-size:11px;color:var(--muted);text-align:center;letter-spacing:.02em;}
+  .credit-footer a{color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--line);}
+  .credit-footer a:hover{color:var(--text);}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important;} }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="preview-col">
+    <div class="seg" id="viewToggle">
+      <button type="button" class="seg-btn active" data-v="edit">Editar</button>
+      <button type="button" class="seg-btn" data-v="preview">Vista previa · área segura</button>
+    </div>
+    <div class="stage"><canvas id="canvas"></canvas></div>
+    <div class="readout" id="readout">— × — px</div>
+    <div class="credit-footer">Herramienta hecha por Ronald Guzmán Dávila · <a href="https://instagram.com/guzzmandro" target="_blank" rel="noopener">@guzzmandro</a></div>
+  </div>
+  <div class="controls-col">
+    <div>
+      <h1>Editor de placa</h1>
+      <p class="sub">Montserrat · plano · ancla en el margen de seguridad real de cada formato</p>
+    </div>
+
+    <div class="field">
+      <label>Formato</label>
+      <div class="seg" id="orientToggle">
+        <button type="button" class="seg-btn" data-o="horizontal">Horizontal</button>
+        <button type="button" class="seg-btn active" data-o="vertical">Vertical</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="magSelect">Revista</label>
+      <select id="magSelect" class="mag-select">
+        <option value="#A3211B" selected>Vistazo / Enfoque / América Economía</option>
+        <option value="#1E0392">Estadio</option>
+        <option value="#7B00A8">Hogar / Vistazo 8M</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="nameInput">Nombre</label>
+      <input type="text" id="nameInput" value="Ronald Guzmán Dávila">
+    </div>
+
+    <div class="field">
+      <label for="titleInput">Cargo (una línea por renglón)</label>
+      <textarea id="titleInput" spellcheck="false">Realizador y Postproductor Audiovisual</textarea>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label>Color superior</label>
+        <div class="color-field">
+          <input type="color" id="redColor" value="#a3211b">
+          <span id="redHex">#A3211B</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Color inferior</label>
+        <div class="color-field">
+          <input type="color" id="grayColor" value="#c7c7c7">
+          <span id="grayHex">#C7C7C7</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <button id="downloadBtn" type="button">Descargar PNG</button>
+    <p class="hint" id="hintText"></p>
+  </div>
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  // Margins are based on real standards, not a photographic rule-of-thirds grid:
+  // - horizontal: broadcast title-safe area, ~10% margin on each edge
+  //   (1920x1080 → 192px side / 108px bottom is a commonly cited figure).
+  // - vertical: platform safe zones for Reels/TikTok/Stories, which reserve
+  //   roughly the bottom ~250-420px for captions/buttons and the right
+  //   ~120-150px for the action bar on a 1080x1920 canvas.
+  const FRAMES = {
+    horizontal: { w:1920, h:1080, leftPct:0.10, bottomPct:0.10, rightSafePct:0.10 },
+    vertical:   { w:1080, h:1920, leftPct:0.08, bottomPct:0.22, rightSafePct:0.14 }
+  };
+  let orientation = 'vertical';
+  let viewMode = 'edit';
+
+  const nameInput = document.getElementById('nameInput');
+  const titleInput = document.getElementById('titleInput');
+  const redColorInput = document.getElementById('redColor');
+  const grayColorInput = document.getElementById('grayColor');
+  const redHex = document.getElementById('redHex');
+  const grayHex = document.getElementById('grayHex');
+  const readout = document.getElementById('readout');
+  const hintText = document.getElementById('hintText');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const orientButtons = Array.from(document.querySelectorAll('#orientToggle .seg-btn'));
+  const viewButtons = Array.from(document.querySelectorAll('#viewToggle .seg-btn'));
+  const magSelect = document.getElementById('magSelect');
+
+  function clamp(v,min,max){ return Math.max(min,Math.min(max,v)); }
+
+  function shade(hex, percent){
+    hex = hex.replace('#','');
+    const num = parseInt(hex,16);
+    let r=(num>>16)&0xff, g=(num>>8)&0xff, b=num&0xff;
+    const mix = (c)=> percent>=0 ? c+(255-c)*percent : c+c*percent;
+    return `rgb(${clamp(Math.round(mix(r)),0,255)},${clamp(Math.round(mix(g)),0,255)},${clamp(Math.round(mix(b)),0,255)})`;
+  }
+
+  function idealTextColor(hex){
+    hex = hex.replace('#','');
+    const num = parseInt(hex,16);
+    const r=(num>>16)&0xff, g=(num>>8)&0xff, b=num&0xff;
+    const yiq = (r*299+g*587+b*114)/1000;
+    return yiq >= 150 ? '#000000' : '#ffffff';
+  }
+
+  function roundRectPath(c,x,y,w,h,tl,tr,br,bl){
+    c.beginPath();
+    c.moveTo(x+tl, y);
+    c.lineTo(x+w-tr, y);
+    c.arcTo(x+w, y, x+w, y+tr, tr);
+    c.lineTo(x+w, y+h-br);
+    c.arcTo(x+w, y+h, x+w-br, y+h, br);
+    c.lineTo(x+bl, y+h);
+    c.arcTo(x, y+h, x, y+h-bl, bl);
+    c.lineTo(x, y+tl);
+    c.arcTo(x, y, x+tl, y, tl);
+    c.closePath();
+  }
+
+  function getInputs(){
+    const name = nameInput.value.trim() || 'Nombre Apellido';
+    const rawLines = titleInput.value.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+    const lines = rawLines.length ? rawLines : ['Cargo'];
+    return { name, lines, redColor: redColorInput.value, grayColor: grayColorInput.value };
+  }
+
+  const REF_W = 1920;
+  function baseSizes(frameW){
+    const s = frameW/REF_W;
+    return {
+      redH: 80*s, grayLineH: 50*s, grayPadV: 15*s,
+      nameFontSize: 54*s, titleFontSize: 32*s,
+      textGap: 34*s, rightPad: 40*s
+    };
+  }
+
+  function computeLayoutOnce(measureCtx, name, lines, F, fontScale){
+    const sz = baseSizes(F.w);
+    const nameFontSize = sz.nameFontSize*fontScale;
+    const titleFontSize = sz.titleFontSize*fontScale;
+    const redH = sz.redH, grayLineH = sz.grayLineH, grayPadV = sz.grayPadV;
+    const grayH = grayPadV + lines.length*grayLineH;
+    const totalH = redH + grayH;
+    const circleR = totalH*0.50;
+    const ringW = Math.max(3, circleR/13);
+
+    // Anchor the OUTERMOST visible edges (the ring, not just the bars)
+    // to the real safe-margin lines for this format.
+    const circleCX = F.w*F.leftPct + circleR + ringW/2;
+    const circleCY = F.h*(1-F.bottomPct) - circleR - ringW/2;
+    const blockTop = circleCY - totalH/2;
+
+    const textX = circleCX + circleR + sz.textGap;
+
+    measureCtx.font = `900 ${nameFontSize}px Montserrat, sans-serif`;
+    const nameW = measureCtx.measureText(name).width;
+    measureCtx.font = `700 ${titleFontSize}px Montserrat, sans-serif`;
+    let maxLineW = 0;
+    lines.forEach(l=>{ maxLineW = Math.max(maxLineW, measureCtx.measureText(l).width); });
+
+    const redBarRight = textX + nameW + sz.rightPad;
+    const grayBarRight = textX + maxLineW + sz.rightPad;
+    const rightSafeX = F.w*(1-F.rightSafePct);
+    const overflowRatio = Math.max(redBarRight, grayBarRight) / rightSafeX;
+
+    return { frameW:F.w, frameH:F.h, redH, grayH, totalH, circleR, circleCX, circleCY,
+      blockTop, textX, nameFontSize, titleFontSize, grayLineH,
+      redBarRight, grayBarRight, overflowRatio };
+  }
+
+  function computeLayout(measureCtx, name, lines, F){
+    let L = computeLayoutOnce(measureCtx, name, lines, F, 1);
+    if (L.overflowRatio > 1){
+      const newScale = clamp(1/L.overflowRatio, 0.55, 1);
+      L = computeLayoutOnce(measureCtx, name, lines, F, newScale);
+    }
+    return L;
+  }
+
+  function ringWidth(L){ return Math.max(3, L.circleR/13); }
+
+  function graphicBounds(L){
+    const rw = ringWidth(L);
+    const left = L.circleCX - L.circleR - rw/2;
+    const right = Math.max(L.redBarRight, L.grayBarRight);
+    const top = L.circleCY - L.circleR - rw/2;
+    const bottom = L.circleCY + L.circleR + rw/2;
+    return { left, right, top, bottom, w: right-left, h: bottom-top };
+  }
+
+  function draw(tctx, L, opts){
+    const { name, lines, redColor, grayColor } = opts;
+    tctx.save();
+
+    tctx.fillStyle = redColor;
+    roundRectPath(tctx, L.circleCX, L.blockTop, L.redBarRight-L.circleCX, L.redH, 0, L.redH/2, L.redH/2, 0);
+    tctx.fill();
+
+    tctx.fillStyle = grayColor;
+    roundRectPath(tctx, L.circleCX, L.blockTop+L.redH, L.grayBarRight-L.circleCX, L.grayH, 0, L.grayH/2, L.grayH/2, 0);
+    tctx.fill();
+
+    tctx.fillStyle = idealTextColor(redColor);
+    tctx.font = `900 ${L.nameFontSize}px Montserrat, sans-serif`;
+    tctx.textBaseline = 'middle';
+    tctx.fillText(name, L.textX, L.blockTop + L.redH/2);
+
+    tctx.fillStyle = idealTextColor(grayColor);
+    tctx.font = `700 ${L.titleFontSize}px Montserrat, sans-serif`;
+    const titleTop = L.blockTop + L.redH;
+    const blockH = lines.length * L.grayLineH;
+    const firstLineCY = titleTop + (L.grayH-blockH)/2 + L.grayLineH/2;
+    lines.forEach((line,i)=>{ tctx.fillText(line, L.textX, firstLineCY + i*L.grayLineH); });
+
+    tctx.globalCompositeOperation = 'destination-out';
+    tctx.beginPath();
+    tctx.arc(L.circleCX, L.circleCY, L.circleR, 0, Math.PI*2);
+    tctx.fill();
+    tctx.globalCompositeOperation = 'source-over';
+
+    const rw = ringWidth(L);
+    tctx.lineWidth = rw;
+    tctx.strokeStyle = 'rgba(255,255,255,.96)';
+    tctx.beginPath();
+    tctx.arc(L.circleCX, L.circleCY, L.circleR-rw/2, 0, Math.PI*2);
+    tctx.stroke();
+
+    tctx.restore();
+  }
+
+  function drawGuides(tctx, F){
+    tctx.save();
+    tctx.strokeStyle = 'rgba(255,255,255,.35)';
+    tctx.lineWidth = Math.max(1, F.w*0.0009);
+    tctx.setLineDash([F.w*0.006, F.w*0.006]);
+    const left = F.w*F.leftPct;
+    const right = F.w*(1-F.rightSafePct);
+    const bottom = F.h*(1-F.bottomPct);
+    tctx.beginPath(); tctx.moveTo(left,0); tctx.lineTo(left,F.h); tctx.stroke();
+    tctx.beginPath(); tctx.moveTo(right,0); tctx.lineTo(right,F.h); tctx.stroke();
+    tctx.beginPath(); tctx.moveTo(0,bottom); tctx.lineTo(F.w,bottom); tctx.stroke();
+    tctx.restore();
+  }
+
+  function updateHint(){
+    hintText.textContent = orientation === 'horizontal'
+      ? 'Margen de seguridad broadcast (10% desde cada borde). Exporta a 1920×1080 — pegas el PNG al 100% y ya queda bien puesto.'
+      : 'Margen pensado para Reels/TikTok/Stories: despejado de la franja inferior de captions/botones y de la barra de acciones a la derecha. Exporta a 1080×1920.';
+  }
+
+  function render(){
+    const { name, lines, redColor, grayColor } = getInputs();
+    const F = FRAMES[orientation];
+    const L = computeLayout(ctx, name, lines, F);
+    updateHint();
+
+    if (viewMode === 'preview'){
+      canvas.width = F.w;
+      canvas.height = F.h;
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.clearRect(0,0,F.w,F.h);
+      draw(ctx, L, { name, lines, redColor, grayColor });
+      drawGuides(ctx, F);
+      readout.innerHTML = `<b>${F.w}</b> × <b>${F.h}</b> px &nbsp;·&nbsp; vista previa con márgenes de seguridad`;
+    } else {
+      const B = graphicBounds(L);
+      const pad = Math.max(18, L.circleR*0.12);
+      const w = Math.ceil(B.w + pad*2), h = Math.ceil(B.h + pad*2);
+      canvas.width = w;
+      canvas.height = h;
+      ctx.setTransform(1,0,0,1, -B.left+pad, -B.top+pad);
+      ctx.clearRect(B.left-pad, B.top-pad, w, h);
+      draw(ctx, L, { name, lines, redColor, grayColor });
+      readout.innerHTML = `edición · exporta a <b>${F.w}</b> × <b>${F.h}</b> px`;
+    }
+
+    redHex.textContent = redColor.toUpperCase();
+    grayHex.textContent = grayColor.toUpperCase();
+    downloadBtn.style.background = redColor;
+    downloadBtn.style.color = idealTextColor(redColor);
+    document.documentElement.style.setProperty('--accent', redColor);
+  }
+
+  downloadBtn.addEventListener('click', ()=>{
+    const { name, lines, redColor, grayColor } = getInputs();
+    const F = FRAMES[orientation];
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = F.w;
+    exportCanvas.height = F.h;
+    const exCtx = exportCanvas.getContext('2d');
+    const L = computeLayout(exCtx, name, lines, F);
+    draw(exCtx, L, { name, lines, redColor, grayColor });
+
+    exportCanvas.toBlob((blob)=>{
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const safeName = name.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+        .replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'') || 'placa';
+      a.href = url;
+      a.download = `placa_${orientation}_${safeName}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 2000);
+    }, 'image/png');
+  });
+
+  orientButtons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      orientation = btn.dataset.o;
+      orientButtons.forEach(b=>b.classList.toggle('active', b===btn));
+      render();
+    });
+  });
+
+  viewButtons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      viewMode = btn.dataset.v;
+      viewButtons.forEach(b=>b.classList.toggle('active', b===btn));
+      render();
+    });
+  });
+
+  magSelect.addEventListener('change', ()=>{
+    redColorInput.value = magSelect.value;
+    render();
+  });
+
+  [nameInput, titleInput, redColorInput, grayColorInput].forEach(el=>{
+    el.addEventListener('input', render);
+  });
+
+  async function init(){
+    try{
+      await Promise.race([
+        Promise.all([
+          document.fonts.load('900 54px Montserrat'),
+          document.fonts.load('700 27px Montserrat')
+        ]).then(()=>document.fonts.ready),
+        new Promise(res=>setTimeout(res,2500))
+      ]);
+    }catch(e){}
+    render();
+  }
+  init();
+})();
+</script>
+</body>
+</html>
