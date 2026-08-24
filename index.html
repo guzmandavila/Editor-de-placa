@@ -112,6 +112,7 @@
         <option value="#A3211B" selected>Vistazo / Enfoque / América Economía</option>
         <option value="#1E0392">Estadio</option>
         <option value="#7B00A8">Hogar / Vistazo 8M</option>
+        <option value="#7EC142">Sostenibilidad / Green Vistazo</option>
       </select>
     </div>
 
@@ -295,7 +296,7 @@
     roundRectPath(tctx, L.circleCX, L.blockTop+L.redH, L.grayBarRight-L.circleCX, L.grayH, 0, L.grayH/2, L.grayH/2, 0);
     tctx.fill();
 
-    tctx.fillStyle = idealTextColor(redColor);
+    tctx.fillStyle = '#ffffff';
     tctx.font = `900 ${L.nameFontSize}px Montserrat, sans-serif`;
     tctx.textBaseline = 'middle';
     tctx.fillText(name, L.textX, L.blockTop + L.redH/2);
