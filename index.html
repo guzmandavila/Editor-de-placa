@@ -221,7 +221,7 @@
 
   const REF_W = 1920;
   function baseSizes(frameW){
-    const s = frameW/REF_W;
+    const s = frameW/((frameW < 1500) ? 1280 : REF_W);
     return {
       redH: 58*s, grayLineH: 34*s, grayPadV: 10*s,
       nameFontSize: 38*s, titleFontSize: 22*s,
