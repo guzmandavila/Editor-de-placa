@@ -24,7 +24,7 @@
   .app{display:flex;min-height:100vh;}
   @media (max-width:880px){
     .app{flex-direction:column;}
-    .controls-col{flex:none;width:100%;border-left:none;border-top:1px solid var(--line);}
+    .back-link{display:inline-flex;align-items:center;gap:7px;color:var(--text);text-decoration:none;border:1px solid var(--line);padding:9px 12px;border-radius:6px;font:700 11px var(--mono);letter-spacing:.05em;margin-bottom:20px}.back-link:hover{border-color:#aaa;background:#252329}.controls-col{flex:none;width:100%;border-left:none;border-top:1px solid var(--line);}
     .preview-col{padding:24px 16px;}
   }
   .preview-col{flex:1 1 60%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;gap:14px;}
@@ -49,7 +49,7 @@
   canvas{display:block;max-width:100%;max-height:70vh;height:auto;}
   .readout{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center;}
   .readout b{color:var(--text);font-weight:600;}
-  .controls-col{flex:0 0 380px;background:var(--panel);border-left:1px solid var(--line);padding:36px 30px 40px;display:flex;flex-direction:column;gap:19px;overflow-y:auto;}
+  .back-link{display:inline-flex;align-items:center;gap:7px;color:var(--text);text-decoration:none;border:1px solid var(--line);padding:9px 12px;border-radius:6px;font:700 11px var(--mono);letter-spacing:.05em;margin-bottom:20px}.back-link:hover{border-color:#aaa;background:#252329}.controls-col{flex:0 0 380px;background:var(--panel);border-left:1px solid var(--line);padding:36px 30px 40px;display:flex;flex-direction:column;gap:19px;overflow-y:auto;}
   h1{font-size:15px;font-weight:800;letter-spacing:.02em;margin:0 0 4px;}
   .sub{font-size:12.5px;color:var(--muted);margin:0;line-height:1.5;}
   label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:7px;}
@@ -93,9 +93,10 @@
     <div class="credit-footer">Herramienta hecha por Ronald Guzmán Dávila · <a href="https://instagram.com/guzzmandro" target="_blank" rel="noopener">@guzzmandro</a></div>
   </div>
   <div class="controls-col">
+    <a class="back-link" href="https://guzmandavila.github.io/toolverse/">← VOLVER A TOOLVERSE</a>
     <div>
       <h1>Editor de placa</h1>
-      <p class="sub">Montserrat · plano · ancla en el margen de seguridad real de cada formato</p>
+      <p class="sub">Construye una placa paso a paso. Elige formato, color y texto; mira el resultado y descarga.</p>
     </div>
 
     <div class="field">
