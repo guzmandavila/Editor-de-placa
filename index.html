@@ -103,7 +103,7 @@
       <label>Formato</label>
       <div class="seg" id="orientToggle">
         <button type="button" class="seg-btn" data-o="horizontal">Horizontal · 16:9</button>
-        <button type="button" class="seg-btn active" data-o="vertical">Vertical · 4:5</button>
+        <button type="button" class="seg-btn active" data-o="vertical">Vertical · 9:16</button>
       </div>
     </div>
 
@@ -159,10 +159,10 @@
   // Margins are based on real standards, not a photographic rule-of-thirds grid:
   // - horizontal: broadcast title-safe area, ~10% margin on each edge
   //   (1920x1080 → 192px side / 108px bottom is a commonly cited figure).
-  // - vertical: feed vertical 4:5 (1080x1350), with 10% safe margins for text and logos.
+  // - vertical: Reels vertical 9:16 (1080x1920), reservando espacio para controles y captions.
   const FRAMES = {
-    horizontal: { w:1920, h:1080, leftPct:0.10, bottomPct:0.10, rightSafePct:0.10 },
-    vertical:   { w:1080, h:1350, leftPct:0.10, bottomPct:0.10, rightSafePct:0.10 }
+    horizontal: { w:1280, h:720, leftPct:0.08, bottomPct:0.10, rightSafePct:0.08 },
+    vertical:   { w:1080, h:1920, leftPct:0.08, bottomPct:0.18, rightSafePct:0.14 }
   };
   let orientation = 'vertical';
   let viewMode = 'edit';
@@ -339,8 +339,8 @@
 
   function updateHint(){
     hintText.textContent = orientation === 'horizontal'
-      ? 'Margen de seguridad broadcast (10% desde cada borde). Exporta a 1920×1080 — pegas el PNG al 100% y ya queda bien puesto.'
-      : 'Formato vertical 4:5 para feed (1080×1350), con margen seguro del 10% para texto y logos.';
+      ? 'Miniatura de YouTube 16:9. Exporta a 1280×720 px con margen seguro del 8%.'
+      : 'Formato vertical 9:16 para Reels (1080×1920), con espacio seguro para captions y controles.';
   }
 
   function render(){
